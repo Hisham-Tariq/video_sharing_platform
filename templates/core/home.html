@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Home | Video Sharing Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h1 class="display-4">Welcome to Video Sharing Platform</h1>
+                <p class="lead">Share your videos and photos with the world.</p>
+                {% if user.is_authenticated %}
+                    {% if user.is_creator %}
+                        <a href="/upload/" class="btn btn-primary">Upload Content</a>
+                    {% else %}
+                        <a href="#featured" class="btn btn-primary">Explore Content</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'users:register' %}" class="btn btn-primary">Register Now</a>
+                    <a href="{% url 'users:login' %}" class="btn btn-outline-secondary ms-2">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="featured" class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Featured Content</h2>
+    </div>
+    
+    {% if featured_media %}
+        {% for item in featured_media %}
+            <div class="col-md-4">
+                <div class="card content-card">
+                    {% if item.file.url|slice:"-3:" == 'mp4' %}
+                        <div class="position-relative">
+                            <video class="media-thumbnail" controls>
+                                <source src="{{ item.file.url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <span class="position-absolute top-0 end-0 badge bg-primary m-2">Video</span>
+                        </div>
+                    {% else %}
+                        <img src="{{ item.file.url }}" class="media-thumbnail" alt="{{ item.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title }}</h5>
+                        <p class="card-text">
+                            {% if item.caption %}
+                                {{ item.caption|truncatechars:100 }}
+                            {% endif %}
+                        </p>
+                        <p class="card-text text-muted">By {{ item.creator.username }}</p>
+                        <a href="{% url 'core:media_detail' pk=item.pk %}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-md-4">
+            <div class="card content-card">
+                <div class="card-body">
+                    <h5 class="card-title">No content available yet</h5>
+                    <p class="card-text">Featured content will appear here once uploaded.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h2>How It Works</h2>
+                <div class="row mt-4">
+                    <div class="col-md-4 text-center">
+                        <h4>Create</h4>
+                        <p>Creators can upload videos and photos with detailed metadata.</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4>Share</h4>
+                        <p>Your content is securely stored and made available to viewers.</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4>Engage</h4>
+                        <p>Viewers can comment, rate and interact with your content.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

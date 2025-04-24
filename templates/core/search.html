@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Media | Video Sharing Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Search Media</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-9">
+                        <input type="text" name="query" class="form-control" placeholder="Search by title, caption, or location" value="{{ query }}">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if query %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Search Results for "{{ query }}"</h2>
+            {% if results %}
+                <p>Found {{ results.paginator.count }} result{{ results.paginator.count|pluralize }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if results %}
+        <div class="row">
+            {% for item in results %}
+                <div class="col-md-4 mb-4">
+                    <div class="card content-card h-100">
+                        {% if item.file.url|slice:"-3:" == 'mp4' %}
+                            <div class="position-relative">
+                                <video class="media-thumbnail" controls>
+                                    <source src="{{ item.file.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <span class="position-absolute top-0 end-0 badge bg-primary m-2">Video</span>
+                            </div>
+                        {% else %}
+                            <img src="{{ item.file.url }}" class="media-thumbnail" alt="{{ item.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text text-muted">
+                                By {{ item.creator.username }} | {{ item.upload_date|date:"M d, Y" }}
+                            </p>
+                            <a href="{% url 'core:media_detail' pk=item.pk %}" class="btn btn-primary btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if results.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if results.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?query={{ query }}&page={{ results.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in results.paginator.page_range %}
+                        {% if results.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?query={{ query }}&page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if results.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?query={{ query }}&page={{ results.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            <p class="mb-0">No results found for "{{ query }}". Try a different search term.</p>
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %} 

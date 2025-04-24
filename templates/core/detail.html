@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ media.title }} | Video Sharing Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'core:media_list' %}">Media</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ media.title }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'core:media_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Gallery
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4 media-detail">
+            <div class="card-body">
+                <h1 class="card-title">{{ media.title }}</h1>
+                <p class="text-muted">
+                    Uploaded by {{ media.creator.username }} on {{ media.upload_date|date:"F d, Y" }}
+                </p>
+                
+                <div class="mb-4">
+                    {% if media.file.url|slice:"-3:" == 'mp4' %}
+                        <video class="w-100" controls>
+                            <source src="{{ media.file.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <img src="{{ media.file.url }}" class="w-100" alt="{{ media.title }}">
+                    {% endif %}
+                </div>
+                
+                {% if media.caption %}
+                    <h5>Caption</h5>
+                    <p>{{ media.caption }}</p>
+                {% endif %}
+                
+                <div class="row">
+                    {% if media.location %}
+                        <div class="col-md-6">
+                            <h5>Location</h5>
+                            <p>{{ media.location }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if media.people_present %}
+                        <div class="col-md-6">
+                            <h5>People Present</h5>
+                            <p>{{ media.people_present }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="rating-section">
+                    <h5>Rating</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rating-stars me-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= avg_rating %}
+                                    <span class="text-warning">★</span>
+                                {% else %}
+                                    <span class="text-muted">☆</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-muted">{{ avg_rating }} / 5 {% if media.ratings.count > 0 %}({{ media.ratings.count }} rating{{ media.ratings.count|pluralize }}){% endif %}</span>
+                    </div>
+                    
+                    {% if user.is_authenticated and user.is_consumer %}
+                        <form method="post" action="{% url 'core:add_rating' pk=media.pk %}" class="mb-4">
+                            {% csrf_token %}
+                            <div class="row g-2 align-items-center">
+                                <div class="col-auto">
+                                    <label for="{{ rating_form.score.id_for_label }}" class="col-form-label">Your Rating:</label>
+                                </div>
+                                <div class="col-auto">
+                                    {{ rating_form.score }}
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-sm btn-primary">Rate</button>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card comment-section">
+            <div class="card-header">
+                <h5 class="mb-0">Comments ({{ comments.count }})</h5>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated and user.is_consumer %}
+                    <form method="post" action="{% url 'core:add_comment' pk=media.pk %}" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ comment_form.text }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Comment</button>
+                    </form>
+                    <hr>
+                {% endif %}
+                
+                {% if comments %}
+                    <div class="comments-list">
+                        {% for comment in comments %}
+                            <div class="comment mb-3">
+                                <div class="d-flex">
+                                    <div class="fw-bold me-2">{{ comment.user.username }}</div>
+                                    <div class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                                <div class="mt-2">{{ comment.text }}</div>
+                            </div>
+                            {% if not forloop.last %}
+                                <hr>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No comments yet. Be the first to comment!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">More from {{ media.creator.username }}</h5>
+            </div>
+            <div class="card-body">
+                {% with creator_media=media.creator.media_content.all|slice:":3" %}
+                    {% if creator_media %}
+                        <div class="row">
+                            {% for item in creator_media %}
+                                {% if item.pk != media.pk %}
+                                    <div class="col-12 mb-3">
+                                        <div class="card">
+                                            {% if item.file.url|slice:"-3:" == 'mp4' %}
+                                                <div class="position-relative">
+                                                    <video class="media-thumbnail" style="height: 120px;" controls>
+                                                        <source src="{{ item.file.url }}" type="video/mp4">
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                </div>
+                                            {% else %}
+                                                <img src="{{ item.file.url }}" class="media-thumbnail" style="height: 120px;" alt="{{ item.title }}">
+                                            {% endif %}
+                                            <div class="card-body p-2">
+                                                <h6 class="card-title mb-0">{{ item.title }}</h6>
+                                                <a href="{% url 'core:media_detail' pk=item.pk %}" class="stretched-link"></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No other content from this creator.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Related Content</h5>
+            </div>
+            <div class="card-body">
+                {% with related_media=media.creator.media_content.all|slice:":3" %}
+                    {% if related_media %}
+                        <div class="list-group">
+                            {% for item in related_media %}
+                                {% if item.pk != media.pk %}
+                                    <a href="{% url 'core:media_detail' pk=item.pk %}" class="list-group-item list-group-item-action">
+                                        {{ item.title }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No related content found.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
