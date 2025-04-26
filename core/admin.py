@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MediaContent, Comment, Rating
+from .models import MediaContent, Comment, Rating, Like, SavedPost
 
 @admin.register(MediaContent)
 class MediaContentAdmin(admin.ModelAdmin):
@@ -21,3 +21,17 @@ class RatingAdmin(admin.ModelAdmin):
     list_filter = ('score', 'created_at')
     search_fields = ('user__username', 'media__title')
     date_hierarchy = 'created_at'
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'media', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'media__title')
+    date_hierarchy = 'created_at'
+
+@admin.register(SavedPost)
+class SavedPostAdmin(admin.ModelAdmin):
+    list_display = ('user', 'media', 'saved_at')
+    list_filter = ('saved_at',)
+    search_fields = ('user__username', 'media__title')
+    date_hierarchy = 'saved_at'
